@@ -2,7 +2,6 @@
 
 [![Build Status](https://github.com/pipego/dag/workflows/ci/badge.svg?branch=main&event=push)](https://github.com/pipego/dag/actions?query=workflow%3Aci)
 [![codecov](https://codecov.io/gh/pipego/dag/branch/main/graph/badge.svg?token=t31YICk0ek)](https://codecov.io/gh/pipego/dag)
-[![Go Report Card](https://goreportcard.com/badge/github.com/pipego/dag)](https://goreportcard.com/report/github.com/pipego/dag)
 [![License](https://img.shields.io/github/license/pipego/dag.svg)](https://github.com/pipego/dag/blob/main/LICENSE)
 [![Tag](https://img.shields.io/github/tag/pipego/dag.svg)](https://github.com/pipego/dag/tags)
 
