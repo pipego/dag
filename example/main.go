@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	LIVELOG = 5000
 	TIMEOUT = 10 * time.Second
 )
 
@@ -64,8 +65,8 @@ func main() {
 	d := initDag()
 
 	l := runner.Livelog{
-		Error: make(chan error),
-		Line:  make(chan *runner.Line),
+		Error: make(chan error, LIVELOG),
+		Line:  make(chan *runner.Line, LIVELOG),
 	}
 
 	_ = runDag(r, d, l)
