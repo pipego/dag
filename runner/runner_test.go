@@ -23,7 +23,7 @@ func TestZero(t *testing.T) {
 	}
 	res := make(chan error)
 
-	go func() { res <- r.Run(log, cancel) }()
+	go func() { res <- r.Run(log) }()
 
 	select {
 	case err := <-res:
@@ -50,7 +50,7 @@ func TestOne(t *testing.T) {
 	}
 	res := make(chan error)
 
-	go func() { res <- r.Run(log, cancel) }()
+	go func() { res <- r.Run(log) }()
 
 	select {
 	case err := <-res:
@@ -80,7 +80,7 @@ func TestManyNoDeps(t *testing.T) {
 	}
 	res := make(chan error)
 
-	go func() { res <- r.Run(log, cancel) }()
+	go func() { res <- r.Run(log) }()
 
 	select {
 	case err := <-res:
@@ -114,7 +114,7 @@ func TestManyWithCycle(t *testing.T) {
 	}
 	res := make(chan error)
 
-	go func() { res <- r.Run(log, cancel) }()
+	go func() { res <- r.Run(log) }()
 
 	select {
 	case err := <-res:
@@ -148,7 +148,7 @@ func TestInvalidToVertex(t *testing.T) {
 	}
 	res := make(chan error)
 
-	go func() { res <- r.Run(log, cancel) }()
+	go func() { res <- r.Run(log) }()
 
 	select {
 	case err := <-res:
@@ -182,7 +182,7 @@ func TestInvalidFromVertex(t *testing.T) {
 	}
 	res := make(chan error)
 
-	go func() { res <- r.Run(log, cancel) }()
+	go func() { res <- r.Run(log) }()
 
 	select {
 	case err := <-res:
@@ -242,7 +242,7 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	}
 	err := make(chan error)
 
-	go func() { err <- r.Run(log, cancel) }()
+	go func() { err <- r.Run(log) }()
 
 	select {
 	case err := <-err:

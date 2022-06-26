@@ -68,7 +68,7 @@ func main() {
 		Line:  make(chan *runner.Line),
 	}
 
-	_ = runDag(r, d, l, cancel)
+	_ = runDag(r, d, l)
 
 L:
 	for {
@@ -103,7 +103,7 @@ func initDag() Dag {
 	return dag
 }
 
-func runDag(run runner.Runner, dag Dag, log runner.Livelog, cancel context.CancelFunc) error {
+func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	for _, vertex := range dag.Vertex {
 		run.AddVertex(vertex.Name, runHelper, vertex.Run)
 	}
@@ -112,7 +112,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog, cancel context.Cance
 		run.AddEdge(edge.From, edge.To)
 	}
 
-	return run.Run(log, cancel)
+	return run.Run(log)
 }
 
 func runHelper(_ string, args []string, log runner.Livelog) error {
