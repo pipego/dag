@@ -116,5 +116,5 @@ func routine(_ string, args []string) runner.Result {
 
 	_ = cmd.Wait()
 
-	return runner.Result{out, ""}
+	return runner.Result{Output: out}
 }
