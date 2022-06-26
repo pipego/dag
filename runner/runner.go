@@ -10,6 +10,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Runner collects functions and arranges them as vertices and edges of a directed acyclic graph.
+// Upon validation of the graph, functions are run in parallel topological order. The zero value
+// is useful.
+type Runner struct {
+	fn    map[string]function
+	graph map[string][]string
+}
+
 type Result struct {
 	Output []Output
 	Error  string
@@ -19,14 +27,6 @@ type Output struct {
 	Pos     int64
 	Time    int64
 	Message string
-}
-
-// Runner collects functions and arranges them as vertices and edges of a directed acyclic graph.
-// Upon validation of the graph, functions are run in parallel topological order. The zero value
-// is useful.
-type Runner struct {
-	fn    map[string]function
-	graph map[string][]string
 }
 
 type function struct {
