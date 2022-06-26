@@ -20,7 +20,7 @@ type Runner struct {
 
 type function struct {
 	args []string
-	name func([]string) error
+	name func(string, []string) error
 }
 
 type result struct {
@@ -33,7 +33,7 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func([]string) error, args []string) {
+func (r *Runner) AddVertex(name string, fn func(string, []string) error, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
@@ -164,7 +164,7 @@ func (r *Runner) start(name string, fn function, resc chan<- result) {
 	go func() {
 		resc <- result{
 			name: name,
-			err:  fn.name(fn.args),
+			err:  fn.name(name, fn.args),
 		}
 	}()
 }

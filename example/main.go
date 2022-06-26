@@ -90,7 +90,7 @@ func runDag(run runner.Runner, dag Dag) error {
 	return run.Run()
 }
 
-func routine(args []string) error {
+func routine(_ string, args []string) error {
 	var a []string
 	var n string
 
