@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/pipego/dag/runner"
 )
@@ -90,9 +91,10 @@ func runDag(run runner.Runner, dag Dag) error {
 	return run.Run()
 }
 
-func routine(_ string, args []string) error {
+func routine(_ string, args []string) runner.Result {
 	var a []string
 	var n string
+	var out []runner.Output
 
 	n, _ = exec.LookPath(args[0])
 	a = args[1:]
@@ -103,11 +105,16 @@ func routine(_ string, args []string) error {
 	_ = cmd.Start()
 
 	scanner := bufio.NewScanner(stdout)
+	p := 1
+
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+		o := runner.Output{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}
+		fmt.Println(o)
+		out = append(out, o)
+		p += 1
 	}
 
 	_ = cmd.Wait()
 
-	return nil
+	return runner.Result{out, ""}
 }

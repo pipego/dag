@@ -10,6 +10,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+type Result struct {
+	Output []Output
+	Error  string
+}
+
+type Output struct {
+	Pos     int64
+	Time    int64
+	Message string
+}
+
 // Runner collects functions and arranges them as vertices and edges of a directed acyclic graph.
 // Upon validation of the graph, functions are run in parallel topological order. The zero value
 // is useful.
@@ -20,12 +31,12 @@ type Runner struct {
 
 type function struct {
 	args []string
-	name func(string, []string) error
+	name func(string, []string) Result
 }
 
 type result struct {
-	err  error
-	name string
+	name   string
+	result Result
 }
 
 var errMissingVertex = errors.New("missing vertex")
@@ -33,7 +44,7 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, []string) error, args []string) {
+func (r *Runner) AddVertex(name string, fn func(string, []string) Result, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
@@ -102,8 +113,8 @@ func (r *Runner) Run() error {
 		running--
 
 		// capture the first error
-		if res.err != nil && err == nil {
-			err = res.err
+		if res.result.Error != "" && err == nil {
+			err = errors.New(res.result.Error)
 		}
 
 		// don't enqueue any more work on if there's been an error
@@ -163,8 +174,8 @@ func (r *Runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 func (r *Runner) start(name string, fn function, resc chan<- result) {
 	go func() {
 		resc <- result{
-			name: name,
-			err:  fn.name(name, fn.args),
+			name:   name,
+			result: fn.name(name, fn.args),
 		}
 	}()
 }
