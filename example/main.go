@@ -2,11 +2,36 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os/exec"
 	"time"
 
 	"github.com/pipego/dag/runner"
+)
+
+const (
+	TIMEOUT = 10 * time.Second
+)
+
+var (
+	tasks = []Task{
+		{
+			Name:     "task1",
+			Commands: []string{"echo", "task1"},
+			Depends:  []string{},
+		},
+		{
+			Name:     "task2",
+			Commands: []string{"echo", "task2"},
+			Depends:  []string{},
+		},
+		{
+			Name:     "task3",
+			Commands: []string{"echo", "task3"},
+			Depends:  []string{"task1", "task2"},
+		},
+	}
 )
 
 type Task struct {
@@ -30,31 +55,30 @@ type Edge struct {
 	To   string
 }
 
-var (
-	tasks = []Task{
-		{
-			Name:     "task1",
-			Commands: []string{"echo", "task1"},
-			Depends:  []string{},
-		},
-		{
-			Name:     "task2",
-			Commands: []string{"echo", "task2"},
-			Depends:  []string{},
-		},
-		{
-			Name:     "task3",
-			Commands: []string{"echo", "task3"},
-			Depends:  []string{"task1", "task2"},
-		},
-	}
-)
-
 func main() {
 	var r runner.Runner
 
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
 	d := initDag()
-	_ = runDag(r, d)
+
+	l := runner.Livelog{
+		Error: make(chan error),
+		Line:  make(chan *runner.Line),
+	}
+
+	_ = runDag(r, d, l, cancel)
+
+L:
+	for {
+		select {
+		case line := <-l.Line:
+			fmt.Println(line)
+		case <-ctx.Done():
+			break L
+		}
+	}
 }
 
 func initDag() Dag {
@@ -79,22 +103,21 @@ func initDag() Dag {
 	return dag
 }
 
-func runDag(run runner.Runner, dag Dag) error {
+func runDag(run runner.Runner, dag Dag, log runner.Livelog, cancel context.CancelFunc) error {
 	for _, vertex := range dag.Vertex {
-		run.AddVertex(vertex.Name, routine, vertex.Run)
+		run.AddVertex(vertex.Name, runHelper, vertex.Run)
 	}
 
 	for _, edge := range dag.Edge {
 		run.AddEdge(edge.From, edge.To)
 	}
 
-	return run.Run()
+	return run.Run(log, cancel)
 }
 
-func routine(_ string, args []string) runner.Result {
+func runHelper(_ string, args []string, log runner.Livelog) error {
 	var a []string
 	var n string
-	var out []runner.Output
 
 	n, _ = exec.LookPath(args[0])
 	a = args[1:]
@@ -105,16 +128,22 @@ func routine(_ string, args []string) runner.Result {
 	_ = cmd.Start()
 
 	scanner := bufio.NewScanner(stdout)
-	p := 1
+	routine(scanner, log)
 
-	for scanner.Scan() {
-		o := runner.Output{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}
-		fmt.Println(o)
-		out = append(out, o)
-		p += 1
-	}
+	go func() {
+		_ = cmd.Wait()
+	}()
 
-	_ = cmd.Wait()
+	return nil
+}
 
-	return runner.Result{Output: out}
+func routine(scanner *bufio.Scanner, log runner.Livelog) {
+	go func() {
+		p := 1
+		for scanner.Scan() {
+			l := runner.Line{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}
+			log.Line <- &l
+			p += 1
+		}
+	}()
 }

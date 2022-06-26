@@ -7,6 +7,8 @@
 package runner
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 )
 
@@ -18,12 +20,12 @@ type Runner struct {
 	graph map[string][]string
 }
 
-type Result struct {
-	Output []Output
-	Error  string
+type Livelog struct {
+	Error chan error
+	Line  chan *Line
 }
 
-type Output struct {
+type Line struct {
 	Pos     int64
 	Time    int64
 	Message string
@@ -31,12 +33,12 @@ type Output struct {
 
 type function struct {
 	args []string
-	name func(string, []string) Result
+	name func(string, []string, Livelog) error
 }
 
 type result struct {
-	name   string
-	result Result
+	err  error
+	name string
 }
 
 var errMissingVertex = errors.New("missing vertex")
@@ -44,7 +46,7 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, []string) Result, args []string) {
+func (r *Runner) AddVertex(name string, fn func(string, []string, Livelog) error, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
@@ -69,7 +71,7 @@ func (r *Runner) AddEdge(from, to string) {
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *Runner) Run() error {
+func (r *Runner) Run(log Livelog, cancel context.CancelFunc) error {
 	var err error
 
 	// sanity check
@@ -103,7 +105,7 @@ func (r *Runner) Run() error {
 	for name := range r.fn {
 		if deps[name] == 0 {
 			running++
-			r.start(name, r.fn[name], resc)
+			r.start(name, r.fn[name], log, resc)
 		}
 	}
 
@@ -113,8 +115,8 @@ func (r *Runner) Run() error {
 		running--
 
 		// capture the first error
-		if res.result.Error != "" && err == nil {
-			err = errors.New(res.result.Error)
+		if res.err != nil && err == nil {
+			err = res.err
 		}
 
 		// don't enqueue any more work on if there's been an error
@@ -127,7 +129,7 @@ func (r *Runner) Run() error {
 			deps[vertex]--
 			if deps[vertex] == 0 {
 				running++
-				r.start(vertex, r.fn[vertex], resc)
+				r.start(vertex, r.fn[vertex], log, resc)
 			}
 		}
 	}
@@ -171,11 +173,11 @@ func (r *Runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 	return false
 }
 
-func (r *Runner) start(name string, fn function, resc chan<- result) {
+func (r *Runner) start(name string, fn function, log Livelog, resc chan<- result) {
 	go func() {
 		resc <- result{
-			name:   name,
-			result: fn.name(name, fn.args),
+			name: name,
+			err:  fn.name(name, fn.args, log),
 		}
 	}()
 }
