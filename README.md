@@ -21,29 +21,7 @@
 
 ## Example
 
-```go
-var r runner.Runner
-
-r.AddVertex("task1", func(args []string) error {
-	fmt.Printf("name %s args %s\n", args[0], args[1])
-	return nil
-}, []string{"echo", "task1"})
-
-r.AddVertex("task2", func(args []string) error {
-	fmt.Printf("name %s args %s\n", args[0], args[1])
-	return nil
-}, []string{"echo", "task2"})
-
-r.AddVertex("task3", func(args []string) error {
-	fmt.Printf("name %s args %s\n", args[0], args[1])
-	return nil
-}, []string{"echo", "task3"})
-
-r.AddEdge("task1", "task3")
-r.AddEdge("task2", "task3")
-
-fmt.Printf("the runner terminated with: %v\n", r.Run())
-```
+Project example can be found [here](https://github.com/pipego/dag/blob/main/example/main.go).
 
 
 
