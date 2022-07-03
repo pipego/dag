@@ -7,6 +7,8 @@
 package runner
 
 import (
+	"sync"
+
 	"github.com/pkg/errors"
 )
 
@@ -69,8 +71,9 @@ func (r *Runner) AddEdge(from, to string) {
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *Runner) Run(log Livelog) error {
+func (r *Runner) Run(log Livelog, wg *sync.WaitGroup) error {
 	var err error
+	var running int
 
 	// sanity check
 	if len(r.fn) == 0 {
@@ -97,13 +100,13 @@ func (r *Runner) Run(log Livelog) error {
 	}
 
 	resc := make(chan result, len(r.fn))
-	running := 0
 
 	// start any vertex that has no deps
 	for name := range r.fn {
 		if deps[name] == 0 {
 			running++
-			r.start(name, r.fn[name], log, resc)
+			wg.Add(1)
+			r.start(name, r.fn[name], log, resc, wg)
 		}
 	}
 
@@ -127,7 +130,8 @@ func (r *Runner) Run(log Livelog) error {
 			deps[vertex]--
 			if deps[vertex] == 0 {
 				running++
-				r.start(vertex, r.fn[vertex], log, resc)
+				wg.Add(1)
+				r.start(vertex, r.fn[vertex], log, resc, wg)
 			}
 		}
 	}
@@ -171,8 +175,9 @@ func (r *Runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 	return false
 }
 
-func (r *Runner) start(name string, fn function, log Livelog, resc chan<- result) {
+func (r *Runner) start(name string, fn function, log Livelog, resc chan<- result, wg *sync.WaitGroup) {
 	go func() {
+		defer wg.Done()
 		resc <- result{
 			name: name,
 			err:  fn.name(name, fn.args, log),

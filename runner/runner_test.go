@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
@@ -14,32 +15,31 @@ const (
 func TestZero(t *testing.T) {
 	var r Runner
 
-	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
-
 	log := Livelog{
 		Error: make(chan error),
 		Line:  make(chan *Line),
 	}
-	res := make(chan error)
 
-	go func() { res <- r.Run(log) }()
+	res := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	go func() { res <- r.Run(log, wg) }()
+
+	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	select {
 	case err := <-res:
 		if err != nil {
 			t.Errorf("%v", err)
 		}
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(TIMEOUT):
 		t.Error("timeout")
 	}
 }
 
 func TestOne(t *testing.T) {
 	var r Runner
-
-	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
 
 	err := errors.New("error")
 	r.AddVertex("one", func(string, []string, Livelog) error { return err }, []string{})
@@ -48,25 +48,27 @@ func TestOne(t *testing.T) {
 		Error: make(chan error),
 		Line:  make(chan *Line),
 	}
-	res := make(chan error)
 
-	go func() { res <- r.Run(log) }()
+	res := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	go func() { res <- r.Run(log, wg) }()
+
+	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	select {
 	case err := <-res:
 		if want, have := err, err; want != have {
 			t.Errorf("want %v, have %v", want, have)
 		}
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(TIMEOUT):
 		t.Error("timeout")
 	}
 }
 
 func TestManyNoDeps(t *testing.T) {
 	var r Runner
-
-	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
 
 	err := errors.New("error")
 	r.AddVertex("one", func(string, []string, Livelog) error { return err }, []string{})
@@ -78,25 +80,27 @@ func TestManyNoDeps(t *testing.T) {
 		Error: make(chan error),
 		Line:  make(chan *Line),
 	}
-	res := make(chan error)
 
-	go func() { res <- r.Run(log) }()
+	res := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	go func() { res <- r.Run(log, wg) }()
+
+	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	select {
 	case err := <-res:
 		if want, have := err, err; want != have {
 			t.Errorf("want %v, have %v", want, have)
 		}
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(TIMEOUT):
 		t.Error("timeout")
 	}
 }
 
 func TestManyWithCycle(t *testing.T) {
 	var r Runner
-
-	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
 
 	r.AddVertex("one", func(string, []string, Livelog) error { return nil }, []string{})
 	r.AddVertex("two", func(string, []string, Livelog) error { return nil }, []string{})
@@ -112,25 +116,27 @@ func TestManyWithCycle(t *testing.T) {
 		Error: make(chan error),
 		Line:  make(chan *Line),
 	}
-	res := make(chan error)
 
-	go func() { res <- r.Run(log) }()
+	res := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	go func() { res <- r.Run(log, wg) }()
+
+	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	select {
 	case err := <-res:
 		if want, have := errCycleDetected, err; want != have {
 			t.Errorf("want %v, have %v", want, have)
 		}
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(TIMEOUT):
 		t.Error("timeout")
 	}
 }
 
 func TestInvalidToVertex(t *testing.T) {
 	var r Runner
-
-	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
 
 	r.AddVertex("one", func(string, []string, Livelog) error { return nil }, []string{})
 	r.AddVertex("two", func(string, []string, Livelog) error { return nil }, []string{})
@@ -146,25 +152,27 @@ func TestInvalidToVertex(t *testing.T) {
 		Error: make(chan error),
 		Line:  make(chan *Line),
 	}
-	res := make(chan error)
 
-	go func() { res <- r.Run(log) }()
+	res := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	go func() { res <- r.Run(log, wg) }()
+
+	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	select {
 	case err := <-res:
 		if want, have := errMissingVertex, err; want != have {
 			t.Errorf("want %v, have %v", want, have)
 		}
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(TIMEOUT):
 		t.Error("timeout")
 	}
 }
 
 func TestInvalidFromVertex(t *testing.T) {
 	var r Runner
-
-	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
 
 	r.AddVertex("one", func(string, []string, Livelog) error { return nil }, []string{})
 	r.AddVertex("two", func(string, []string, Livelog) error { return nil }, []string{})
@@ -180,25 +188,27 @@ func TestInvalidFromVertex(t *testing.T) {
 		Error: make(chan error),
 		Line:  make(chan *Line),
 	}
-	res := make(chan error)
 
-	go func() { res <- r.Run(log) }()
+	res := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	go func() { res <- r.Run(log, wg) }()
+
+	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	select {
 	case err := <-res:
 		if want, have := errMissingVertex, err; want != have {
 			t.Errorf("want %v, have %v", want, have)
 		}
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(TIMEOUT):
 		t.Error("timeout")
 	}
 }
 
 func TestManyWithDepsSuccess(t *testing.T) {
 	var r Runner
-
-	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
 
 	res := make(chan string, 7)
 	r.AddVertex("one", func(string, []string, Livelog) error {
@@ -240,21 +250,26 @@ func TestManyWithDepsSuccess(t *testing.T) {
 		Error: make(chan error),
 		Line:  make(chan *Line),
 	}
-	err := make(chan error)
 
-	go func() { err <- r.Run(log) }()
+	err := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	go func() { err <- r.Run(log, wg) }()
+
+	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 	select {
 	case err := <-err:
 		if want, have := error(nil), err; want != have {
 			t.Errorf("want %v, have %v", want, have)
 		}
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(TIMEOUT):
 		t.Error("timeout")
 	}
 
 	results := make([]string, 7)
-	timeout := time.After(100 * time.Millisecond)
+	timeout := time.After(TIMEOUT)
 
 	for i := range results {
 		select {

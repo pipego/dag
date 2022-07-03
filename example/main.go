@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/pipego/dag/runner"
@@ -59,27 +60,38 @@ type Edge struct {
 func main() {
 	var r runner.Runner
 
-	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
-
-	d := initDag()
-
 	l := runner.Livelog{
 		Error: make(chan error, LIVELOG),
 		Line:  make(chan *runner.Line, LIVELOG),
 	}
 
-	_ = runDag(r, d, l)
+	wg := &sync.WaitGroup{}
+
+	d := initDag()
+	_ = runDag(r, d, l, wg)
+
+	go monitor(wg)
+
+	done := make(chan bool, 1)
+	go printer(l, done)
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
 
 L:
 	for {
 		select {
-		case line := <-l.Line:
-			fmt.Println(line)
+		case <-done:
+			break L
 		case <-ctx.Done():
 			break L
 		}
 	}
+
+	close(l.Error)
+	close(l.Line)
+
+	fmt.Println("done.")
 }
 
 func initDag() Dag {
@@ -104,7 +116,7 @@ func initDag() Dag {
 	return dag
 }
 
-func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
+func runDag(run runner.Runner, dag Dag, log runner.Livelog, wg *sync.WaitGroup) error {
 	for _, vertex := range dag.Vertex {
 		run.AddVertex(vertex.Name, runHelper, vertex.Run)
 	}
@@ -113,7 +125,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 		run.AddEdge(edge.From, edge.To)
 	}
 
-	return run.Run(log)
+	return run.Run(log, wg)
 }
 
 func runHelper(_ string, args []string, log runner.Livelog) error {
@@ -147,4 +159,17 @@ func routine(scanner *bufio.Scanner, log runner.Livelog) {
 			p += 1
 		}
 	}()
+}
+
+func monitor(wg *sync.WaitGroup) {
+	wg.Wait()
+}
+
+func printer(log runner.Livelog, done chan<- bool) {
+	for i := 0; i < len(tasks); i++ {
+		line := <-log.Line
+		fmt.Println(line)
+	}
+
+	done <- true
 }
