@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"sync"
 	"time"
 
 	"github.com/pipego/dag/runner"
@@ -65,12 +64,8 @@ func main() {
 		Line:  make(chan *runner.Line, LIVELOG),
 	}
 
-	wg := &sync.WaitGroup{}
-
 	d := initDag()
-	_ = runDag(r, d, l, wg)
-
-	go monitor(wg)
+	_ = runDag(r, d, l)
 
 	done := make(chan bool, 1)
 	go printer(l, done)
@@ -116,7 +111,7 @@ func initDag() Dag {
 	return dag
 }
 
-func runDag(run runner.Runner, dag Dag, log runner.Livelog, wg *sync.WaitGroup) error {
+func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	for _, vertex := range dag.Vertex {
 		run.AddVertex(vertex.Name, runHelper, vertex.Run)
 	}
@@ -125,7 +120,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog, wg *sync.WaitGroup) 
 		run.AddEdge(edge.From, edge.To)
 	}
 
-	return run.Run(log, wg)
+	return run.Run(log)
 }
 
 func runHelper(_ string, args []string, log runner.Livelog) error {
@@ -159,10 +154,6 @@ func routine(scanner *bufio.Scanner, log runner.Livelog) {
 			p += 1
 		}
 	}()
-}
-
-func monitor(wg *sync.WaitGroup) {
-	wg.Wait()
 }
 
 func printer(log runner.Livelog, done chan<- bool) {

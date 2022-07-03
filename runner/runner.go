@@ -71,7 +71,7 @@ func (r *Runner) AddEdge(from, to string) {
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *Runner) Run(log Livelog, wg *sync.WaitGroup) error {
+func (r *Runner) Run(log Livelog) error {
 	var err error
 	var running int
 
@@ -100,6 +100,7 @@ func (r *Runner) Run(log Livelog, wg *sync.WaitGroup) error {
 	}
 
 	resc := make(chan result, len(r.fn))
+	wg := &sync.WaitGroup{}
 
 	// start any vertex that has no deps
 	for name := range r.fn {
@@ -135,6 +136,10 @@ func (r *Runner) Run(log Livelog, wg *sync.WaitGroup) error {
 			}
 		}
 	}
+
+	go func() {
+		wg.Wait()
+	}()
 
 	return err
 }

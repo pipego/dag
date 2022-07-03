@@ -3,7 +3,6 @@ package runner
 import (
 	"context"
 	"errors"
-	"sync"
 	"testing"
 	"time"
 )
@@ -21,9 +20,8 @@ func TestZero(t *testing.T) {
 	}
 
 	res := make(chan error)
-	wg := &sync.WaitGroup{}
 
-	go func() { res <- r.Run(log, wg) }()
+	go func() { res <- r.Run(log) }()
 
 	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -50,9 +48,8 @@ func TestOne(t *testing.T) {
 	}
 
 	res := make(chan error)
-	wg := &sync.WaitGroup{}
 
-	go func() { res <- r.Run(log, wg) }()
+	go func() { res <- r.Run(log) }()
 
 	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -82,9 +79,8 @@ func TestManyNoDeps(t *testing.T) {
 	}
 
 	res := make(chan error)
-	wg := &sync.WaitGroup{}
 
-	go func() { res <- r.Run(log, wg) }()
+	go func() { res <- r.Run(log) }()
 
 	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -118,9 +114,8 @@ func TestManyWithCycle(t *testing.T) {
 	}
 
 	res := make(chan error)
-	wg := &sync.WaitGroup{}
 
-	go func() { res <- r.Run(log, wg) }()
+	go func() { res <- r.Run(log) }()
 
 	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -154,9 +149,8 @@ func TestInvalidToVertex(t *testing.T) {
 	}
 
 	res := make(chan error)
-	wg := &sync.WaitGroup{}
 
-	go func() { res <- r.Run(log, wg) }()
+	go func() { res <- r.Run(log) }()
 
 	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -190,9 +184,8 @@ func TestInvalidFromVertex(t *testing.T) {
 	}
 
 	res := make(chan error)
-	wg := &sync.WaitGroup{}
 
-	go func() { res <- r.Run(log, wg) }()
+	go func() { res <- r.Run(log) }()
 
 	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -252,9 +245,8 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	}
 
 	err := make(chan error)
-	wg := &sync.WaitGroup{}
 
-	go func() { err <- r.Run(log, wg) }()
+	go func() { err <- r.Run(log) }()
 
 	_, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
