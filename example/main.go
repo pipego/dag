@@ -146,6 +146,8 @@ func runHelper(_ string, args []string, log runner.Livelog) error {
 }
 
 func routine(scanner *bufio.Scanner, log runner.Livelog) {
+	done := make(chan bool)
+
 	go func() {
 		p := 1
 		for scanner.Scan() {
@@ -153,7 +155,10 @@ func routine(scanner *bufio.Scanner, log runner.Livelog) {
 			log.Line <- &l
 			p += 1
 		}
+		done <- true
 	}()
+
+	<-done
 }
 
 func printer(log runner.Livelog, done chan<- bool) {
