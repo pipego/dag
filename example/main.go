@@ -157,7 +157,7 @@ func routine(scanner *bufio.Scanner, log runner.Livelog) {
 }
 
 func printer(log runner.Livelog, done chan<- bool) {
-	for i := 0; i < len(tasks); i++ {
+	for range tasks {
 		line := <-log.Line
 		fmt.Println(line)
 	}
