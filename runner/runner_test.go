@@ -40,7 +40,7 @@ func TestOne(t *testing.T) {
 	var r Runner
 
 	err := errors.New("error")
-	r.AddVertex("one", func(string, []string, Livelog) error { return err }, []string{})
+	r.AddVertex("one", func(string, []string, Timeout, Livelog) error { return err }, []string{}, Timeout{})
 
 	log := Livelog{
 		Error: make(chan error),
@@ -68,10 +68,10 @@ func TestManyNoDeps(t *testing.T) {
 	var r Runner
 
 	err := errors.New("error")
-	r.AddVertex("one", func(string, []string, Livelog) error { return err }, []string{})
-	r.AddVertex("two", func(string, []string, Livelog) error { return err }, []string{})
-	r.AddVertex("three", func(string, []string, Livelog) error { return err }, []string{})
-	r.AddVertex("four", func(string, []string, Livelog) error { return err }, []string{})
+	r.AddVertex("one", func(string, []string, Timeout, Livelog) error { return err }, []string{}, Timeout{})
+	r.AddVertex("two", func(string, []string, Timeout, Livelog) error { return err }, []string{}, Timeout{})
+	r.AddVertex("three", func(string, []string, Timeout, Livelog) error { return err }, []string{}, Timeout{})
+	r.AddVertex("four", func(string, []string, Timeout, Livelog) error { return err }, []string{}, Timeout{})
 
 	log := Livelog{
 		Error: make(chan error),
@@ -98,10 +98,10 @@ func TestManyNoDeps(t *testing.T) {
 func TestManyWithCycle(t *testing.T) {
 	var r Runner
 
-	r.AddVertex("one", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("two", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("three", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("four", func(string, []string, Livelog) error { return nil }, []string{})
+	r.AddVertex("one", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("two", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("three", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("four", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
 
 	r.AddEdge("one", "two")
 	r.AddEdge("two", "three")
@@ -133,10 +133,10 @@ func TestManyWithCycle(t *testing.T) {
 func TestInvalidToVertex(t *testing.T) {
 	var r Runner
 
-	r.AddVertex("one", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("two", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("three", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("four", func(string, []string, Livelog) error { return nil }, []string{})
+	r.AddVertex("one", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("two", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("three", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("four", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
 
 	r.AddEdge("one", "two")
 	r.AddEdge("two", "three")
@@ -168,10 +168,10 @@ func TestInvalidToVertex(t *testing.T) {
 func TestInvalidFromVertex(t *testing.T) {
 	var r Runner
 
-	r.AddVertex("one", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("two", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("three", func(string, []string, Livelog) error { return nil }, []string{})
-	r.AddVertex("four", func(string, []string, Livelog) error { return nil }, []string{})
+	r.AddVertex("one", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("two", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("three", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
+	r.AddVertex("four", func(string, []string, Timeout, Livelog) error { return nil }, []string{}, Timeout{})
 
 	r.AddEdge("one", "two")
 	r.AddEdge("two", "three")
@@ -204,34 +204,34 @@ func TestManyWithDepsSuccess(t *testing.T) {
 	var r Runner
 
 	res := make(chan string, 7)
-	r.AddVertex("one", func(string, []string, Livelog) error {
+	r.AddVertex("one", func(string, []string, Timeout, Livelog) error {
 		res <- "one"
 		return nil
-	}, []string{})
-	r.AddVertex("two", func(string, []string, Livelog) error {
+	}, []string{}, Timeout{})
+	r.AddVertex("two", func(string, []string, Timeout, Livelog) error {
 		res <- "two"
 		return nil
-	}, []string{})
-	r.AddVertex("three", func(string, []string, Livelog) error {
+	}, []string{}, Timeout{})
+	r.AddVertex("three", func(string, []string, Timeout, Livelog) error {
 		res <- "three"
 		return nil
-	}, []string{})
-	r.AddVertex("four", func(string, []string, Livelog) error {
+	}, []string{}, Timeout{})
+	r.AddVertex("four", func(string, []string, Timeout, Livelog) error {
 		res <- "four"
 		return nil
-	}, []string{})
-	r.AddVertex("five", func(string, []string, Livelog) error {
+	}, []string{}, Timeout{})
+	r.AddVertex("five", func(string, []string, Timeout, Livelog) error {
 		res <- "five"
 		return nil
-	}, []string{})
-	r.AddVertex("six", func(string, []string, Livelog) error {
+	}, []string{}, Timeout{})
+	r.AddVertex("six", func(string, []string, Timeout, Livelog) error {
 		res <- "six"
 		return nil
-	}, []string{})
-	r.AddVertex("seven", func(string, []string, Livelog) error {
+	}, []string{}, Timeout{})
+	r.AddVertex("seven", func(string, []string, Timeout, Livelog) error {
 		res <- "seven"
 		return nil
-	}, []string{})
+	}, []string{}, Timeout{})
 
 	r.AddEdge("one", "two")
 	r.AddEdge("one", "three")

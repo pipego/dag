@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os/exec"
 	"time"
@@ -11,34 +10,19 @@ import (
 )
 
 const (
-	LIVELOG = 5000
-	TIMEOUT = 10 * time.Second
+	TIME = 10
+	UNIT = "second"
 )
 
-var (
-	tasks = []Task{
-		{
-			Name:     "task1",
-			Commands: []string{"echo", "task1"},
-			Depends:  []string{},
-		},
-		{
-			Name:     "task2",
-			Commands: []string{"echo", "task2"},
-			Depends:  []string{},
-		},
-		{
-			Name:     "task3",
-			Commands: []string{"echo", "task3"},
-			Depends:  []string{"task1", "task2"},
-		},
-	}
+const (
+	LIVELOG = 5000
 )
 
 type Task struct {
 	Name     string
 	Commands []string
 	Depends  []string
+	Timeout  runner.Timeout
 }
 
 type Dag struct {
@@ -47,14 +31,38 @@ type Dag struct {
 }
 
 type Vertex struct {
-	Name string
-	Run  []string
+	Name     string
+	Commands []string
+	Timeout  runner.Timeout
 }
 
 type Edge struct {
 	From string
 	To   string
 }
+
+var (
+	tasks = []Task{
+		{
+			Name:     "task1",
+			Commands: []string{"echo", "task1"},
+			Depends:  []string{},
+			Timeout:  runner.Timeout{Time: TIME, Unit: UNIT},
+		},
+		{
+			Name:     "task2",
+			Commands: []string{"echo", "task2"},
+			Depends:  []string{},
+			Timeout:  runner.Timeout{Time: TIME, Unit: UNIT},
+		},
+		{
+			Name:     "task3",
+			Commands: []string{"echo", "task3"},
+			Depends:  []string{"task1", "task2"},
+			Timeout:  runner.Timeout{Time: TIME, Unit: UNIT},
+		},
+	}
+)
 
 func main() {
 	var r runner.Runner
@@ -70,15 +78,10 @@ func main() {
 	done := make(chan bool, 1)
 	go printer(l, done)
 
-	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
-
 L:
 	for {
 		select {
 		case <-done:
-			break L
-		case <-ctx.Done():
 			break L
 		}
 	}
@@ -94,8 +97,9 @@ func initDag() Dag {
 
 	for _, task := range tasks {
 		d := Vertex{
-			Name: task.Name,
-			Run:  task.Commands,
+			Name:     task.Name,
+			Commands: task.Commands,
+			Timeout:  task.Timeout,
 		}
 		dag.Vertex = append(dag.Vertex, d)
 
@@ -113,7 +117,7 @@ func initDag() Dag {
 
 func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	for _, vertex := range dag.Vertex {
-		run.AddVertex(vertex.Name, runHelper, vertex.Run)
+		run.AddVertex(vertex.Name, runHelper, vertex.Commands, vertex.Timeout)
 	}
 
 	for _, edge := range dag.Edge {
@@ -123,7 +127,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	return run.Run(log)
 }
 
-func runHelper(_ string, args []string, log runner.Livelog) error {
+func runHelper(_ string, args []string, _ runner.Timeout, log runner.Livelog) error {
 	var a []string
 	var n string
 

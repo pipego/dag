@@ -31,9 +31,15 @@ type Line struct {
 	Message string
 }
 
+type Timeout struct {
+	Time int64
+	Unit string
+}
+
 type function struct {
-	args []string
-	name func(string, []string, Livelog) error
+	args    []string
+	name    func(string, []string, Timeout, Livelog) error
+	timeout Timeout
 }
 
 type result struct {
@@ -46,14 +52,15 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, []string, Livelog) error, args []string) {
+func (r *Runner) AddVertex(name string, fn func(string, []string, Timeout, Livelog) error, args []string, timeout Timeout) {
 	if r.fn == nil {
 		r.fn = make(map[string]function)
 	}
 
 	r.fn[name] = function{
-		args: args,
-		name: fn,
+		args:    args,
+		name:    fn,
+		timeout: timeout,
 	}
 }
 
@@ -185,7 +192,7 @@ func (r *Runner) start(name string, fn function, log Livelog, resc chan<- result
 		defer wg.Done()
 		resc <- result{
 			name: name,
-			err:  fn.name(name, fn.args, log),
+			err:  fn.name(name, fn.args, fn.timeout, log),
 		}
 	}()
 }
