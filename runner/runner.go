@@ -16,8 +16,18 @@ import (
 // Upon validation of the graph, functions are run in parallel topological order. The zero value
 // is useful.
 type Runner struct {
-	fn    map[string]function
+	fn    map[string]*function
 	graph map[string][]string
+}
+
+type File struct {
+	Content string
+	Gzip    bool
+}
+
+type Timeout struct {
+	Time int64
+	Unit string
 }
 
 type Livelog struct {
@@ -31,14 +41,10 @@ type Line struct {
 	Message string
 }
 
-type Timeout struct {
-	Time int64
-	Unit string
-}
-
 type function struct {
 	args    []string
-	name    func(string, []string, Timeout, Livelog) error
+	file    File
+	name    func(string, File, []string, Timeout, Livelog) error
 	timeout Timeout
 }
 
@@ -52,13 +58,15 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, []string, Timeout, Livelog) error, args []string, timeout Timeout) {
+func (r *Runner) AddVertex(name string, fn func(string, File, []string, Timeout, Livelog) error,
+	file File, args []string, timeout Timeout) {
 	if r.fn == nil {
-		r.fn = make(map[string]function)
+		r.fn = make(map[string]*function)
 	}
 
-	r.fn[name] = function{
+	r.fn[name] = &function{
 		args:    args,
+		file:    file,
 		name:    fn,
 		timeout: timeout,
 	}
@@ -187,12 +195,12 @@ func (r *Runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 	return false
 }
 
-func (r *Runner) start(name string, fn function, log Livelog, resc chan<- result, wg *sync.WaitGroup) {
+func (r *Runner) start(name string, fn *function, log Livelog, resc chan<- result, wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
 		resc <- result{
 			name: name,
-			err:  fn.name(name, fn.args, fn.timeout, log),
+			err:  fn.name(name, fn.file, fn.args, fn.timeout, log),
 		}
 	}()
 }
