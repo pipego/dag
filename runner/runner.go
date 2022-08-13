@@ -25,11 +25,6 @@ type File struct {
 	Gzip    bool
 }
 
-type Timeout struct {
-	Time int64
-	Unit string
-}
-
 type Livelog struct {
 	Error chan error
 	Line  chan *Line
@@ -42,10 +37,9 @@ type Line struct {
 }
 
 type function struct {
-	args    []string
-	file    File
-	name    func(string, File, []string, Timeout, Livelog) error
-	timeout Timeout
+	args []string
+	file File
+	name func(string, File, []string, Livelog) error
 }
 
 type result struct {
@@ -58,17 +52,16 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, File, []string, Timeout, Livelog) error,
-	file File, args []string, timeout Timeout) {
+func (r *Runner) AddVertex(name string, fn func(string, File, []string, Livelog) error,
+	file File, args []string) {
 	if r.fn == nil {
 		r.fn = make(map[string]*function)
 	}
 
 	r.fn[name] = &function{
-		args:    args,
-		file:    file,
-		name:    fn,
-		timeout: timeout,
+		args: args,
+		file: file,
+		name: fn,
 	}
 }
 
@@ -200,7 +193,7 @@ func (r *Runner) start(name string, fn *function, log Livelog, resc chan<- resul
 		defer wg.Done()
 		resc <- result{
 			name: name,
-			err:  fn.name(name, fn.file, fn.args, fn.timeout, log),
+			err:  fn.name(name, fn.file, fn.args, log),
 		}
 	}()
 }

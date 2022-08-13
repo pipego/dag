@@ -23,7 +23,6 @@ type Task struct {
 	File     runner.File
 	Commands []string
 	Depends  []string
-	Timeout  runner.Timeout
 }
 
 type Dag struct {
@@ -35,7 +34,6 @@ type Vertex struct {
 	Name     string
 	File     runner.File
 	Commands []string
-	Timeout  runner.Timeout
 }
 
 type Edge struct {
@@ -50,21 +48,18 @@ var (
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task1"},
 			Depends:  []string{},
-			Timeout:  runner.Timeout{Time: TIME, Unit: UNIT},
 		},
 		{
 			Name:     "task2",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task2"},
 			Depends:  []string{},
-			Timeout:  runner.Timeout{Time: TIME, Unit: UNIT},
 		},
 		{
 			Name:     "task3",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task3"},
 			Depends:  []string{"task1", "task2"},
-			Timeout:  runner.Timeout{Time: TIME, Unit: UNIT},
 		},
 	}
 )
@@ -105,7 +100,6 @@ func initDag() Dag {
 			Name:     task.Name,
 			File:     task.File,
 			Commands: task.Commands,
-			Timeout:  task.Timeout,
 		}
 		dag.Vertex = append(dag.Vertex, d)
 
@@ -123,7 +117,7 @@ func initDag() Dag {
 
 func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	for _, vertex := range dag.Vertex {
-		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Commands, vertex.Timeout)
+		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Commands)
 	}
 
 	for _, edge := range dag.Edge {
@@ -133,7 +127,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	return run.Run(log)
 }
 
-func runHelper(_ string, _ runner.File, args []string, _ runner.Timeout, log runner.Livelog) error {
+func runHelper(_ string, _ runner.File, args []string, log runner.Livelog) error {
 	var a []string
 	var n string
 
