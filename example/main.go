@@ -10,11 +10,6 @@ import (
 )
 
 const (
-	TIME = 10
-	UNIT = "second"
-)
-
-const (
 	LIVELOG = 5000
 )
 
