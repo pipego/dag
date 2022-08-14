@@ -17,6 +17,7 @@ type Task struct {
 	Name     string
 	File     runner.File
 	Commands []string
+	Livelog  int64
 	Depends  []string
 }
 
@@ -29,6 +30,7 @@ type Vertex struct {
 	Name     string
 	File     runner.File
 	Commands []string
+	Livelog  int64
 }
 
 type Edge struct {
@@ -42,18 +44,21 @@ var (
 			Name:     "task1",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task1"},
+			Livelog:  LIVELOG,
 			Depends:  []string{},
 		},
 		{
 			Name:     "task2",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task2"},
+			Livelog:  LIVELOG,
 			Depends:  []string{},
 		},
 		{
 			Name:     "task3",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task3"},
+			Livelog:  LIVELOG,
 			Depends:  []string{"task1", "task2"},
 		},
 	}
@@ -95,6 +100,7 @@ func initDag() Dag {
 			Name:     task.Name,
 			File:     task.File,
 			Commands: task.Commands,
+			Livelog:  task.Livelog,
 		}
 		dag.Vertex = append(dag.Vertex, d)
 
@@ -112,7 +118,7 @@ func initDag() Dag {
 
 func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	for _, vertex := range dag.Vertex {
-		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Commands)
+		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Commands, vertex.Livelog)
 	}
 
 	for _, edge := range dag.Edge {
@@ -122,7 +128,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	return run.Run(log)
 }
 
-func runHelper(_ string, _ runner.File, args []string, log runner.Livelog) error {
+func runHelper(_ string, _ runner.File, args []string, _ int64, log runner.Livelog) error {
 	var a []string
 	var n string
 
