@@ -143,9 +143,9 @@ func runHelper(_ string, _ runner.File, args []string, _ int64, log runner.Livel
 	scanner := bufio.NewScanner(stdout)
 	routine(scanner, log)
 
-	go func() {
+	go func(cmd *exec.Cmd) {
 		_ = cmd.Wait()
-	}()
+	}(cmd)
 
 	return nil
 }
@@ -153,7 +153,7 @@ func runHelper(_ string, _ runner.File, args []string, _ int64, log runner.Livel
 func routine(scanner *bufio.Scanner, log runner.Livelog) {
 	done := make(chan bool)
 
-	go func() {
+	go func(scanner *bufio.Scanner, log runner.Livelog, done chan bool) {
 		p := 1
 		for scanner.Scan() {
 			l := runner.Line{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}
@@ -161,7 +161,7 @@ func routine(scanner *bufio.Scanner, log runner.Livelog) {
 			p += 1
 		}
 		done <- true
-	}()
+	}(scanner, log, done)
 
 	<-done
 }

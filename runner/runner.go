@@ -147,9 +147,9 @@ func (r *Runner) Run(log Livelog) error {
 		}
 	}
 
-	go func() {
+	go func(wg *sync.WaitGroup) {
 		wg.Wait()
-	}()
+	}(wg)
 
 	return err
 }
@@ -191,11 +191,11 @@ func (r *Runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 }
 
 func (r *Runner) start(name string, fn *function, log Livelog, resc chan<- result, wg *sync.WaitGroup) {
-	go func() {
+	go func(name string, fn *function, log Livelog, resc chan<- result, wg *sync.WaitGroup) {
 		defer wg.Done()
 		resc <- result{
 			name: name,
 			err:  fn.name(name, fn.file, fn.args, fn.livelog, log),
 		}
-	}()
+	}(name, fn, log, resc, wg)
 }
