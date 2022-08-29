@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	LIVELOG = 5000
+	Log = 5000
 )
 
 type Task struct {
@@ -44,21 +44,21 @@ var (
 			Name:     "task1",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task1"},
-			Livelog:  LIVELOG,
+			Livelog:  Log,
 			Depends:  []string{},
 		},
 		{
 			Name:     "task2",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task2"},
-			Livelog:  LIVELOG,
+			Livelog:  Log,
 			Depends:  []string{},
 		},
 		{
 			Name:     "task3",
 			File:     runner.File{Content: "", Gzip: false},
 			Commands: []string{"echo", "task3"},
-			Livelog:  LIVELOG,
+			Livelog:  Log,
 			Depends:  []string{"task1", "task2"},
 		},
 	}
@@ -68,8 +68,8 @@ func main() {
 	var r runner.Runner
 
 	l := runner.Livelog{
-		Error: make(chan error, LIVELOG),
-		Line:  make(chan *runner.Line, LIVELOG),
+		Error: make(chan error, Log),
+		Line:  make(chan *runner.Line, Log),
 	}
 
 	d := initDag()
