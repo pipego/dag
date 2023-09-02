@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/pipego/dag/runner"
@@ -16,6 +17,7 @@ const (
 type Task struct {
 	Name     string
 	File     runner.File
+	Params   []runner.Param
 	Commands []string
 	Livelog  int64
 	Depends  []string
@@ -29,6 +31,7 @@ type Dag struct {
 type Vertex struct {
 	Name     string
 	File     runner.File
+	Params   []runner.Param
 	Commands []string
 	Livelog  int64
 }
@@ -41,23 +44,41 @@ type Edge struct {
 var (
 	tasks = []Task{
 		{
-			Name:     "task1",
-			File:     runner.File{Content: "", Gzip: false},
-			Commands: []string{"echo", "task1"},
+			Name: "task1",
+			File: runner.File{Content: "", Gzip: false},
+			Params: []runner.Param{
+				{
+					Name:  "env1",
+					Value: "val1",
+				},
+			},
+			Commands: []string{"echo", "$env1"},
 			Livelog:  Log,
 			Depends:  []string{},
 		},
 		{
-			Name:     "task2",
-			File:     runner.File{Content: "", Gzip: false},
-			Commands: []string{"echo", "task2"},
+			Name: "task2",
+			File: runner.File{Content: "", Gzip: false},
+			Params: []runner.Param{
+				{
+					Name:  "env2",
+					Value: "val2",
+				},
+			},
+			Commands: []string{"echo", "$env2"},
 			Livelog:  Log,
 			Depends:  []string{},
 		},
 		{
-			Name:     "task3",
-			File:     runner.File{Content: "", Gzip: false},
-			Commands: []string{"echo", "task3"},
+			Name: "task3",
+			File: runner.File{Content: "", Gzip: false},
+			Params: []runner.Param{
+				{
+					Name:  "env3",
+					Value: "val3",
+				},
+			},
+			Commands: []string{"echo", "$env3"},
 			Livelog:  Log,
 			Depends:  []string{"task1", "task2"},
 		},
@@ -99,6 +120,7 @@ func initDag() Dag {
 		d := Vertex{
 			Name:     task.Name,
 			File:     task.File,
+			Params:   task.Params,
 			Commands: task.Commands,
 			Livelog:  task.Livelog,
 		}
@@ -118,7 +140,7 @@ func initDag() Dag {
 
 func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	for _, vertex := range dag.Vertex {
-		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Commands, vertex.Livelog)
+		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Params, vertex.Commands, vertex.Livelog)
 	}
 
 	for _, edge := range dag.Edge {
@@ -128,14 +150,17 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	return run.Run(log)
 }
 
-func runHelper(_ string, _ runner.File, args []string, _ int64, log runner.Livelog) error {
-	var a []string
+func runHelper(_ string, _ runner.File, params []runner.Param, cmds []string, _ int64, log runner.Livelog) error {
+	var a, args []string
 	var n string
+
+	args = buildArgs(cmds)
 
 	n, _ = exec.LookPath(args[0])
 	a = args[1:]
 
 	cmd := exec.Command(n, a...)
+	cmd.Env = append(cmd.Environ(), buildEnvs(params)...)
 	stdout, _ := cmd.StdoutPipe()
 
 	_ = cmd.Start()
@@ -148,6 +173,20 @@ func runHelper(_ string, _ runner.File, args []string, _ int64, log runner.Livel
 	}(cmd)
 
 	return nil
+}
+
+func buildArgs(cmds []string) []string {
+	return []string{"bash", "-c", strings.Join(cmds, " ")}
+}
+
+func buildEnvs(params []runner.Param) []string {
+	var buf []string
+
+	for _, item := range params {
+		buf = append(buf, item.Name+"="+item.Value)
+	}
+
+	return buf
 }
 
 func routine(scanner *bufio.Scanner, log runner.Livelog) {
