@@ -31,8 +31,7 @@ type Param struct {
 }
 
 type Livelog struct {
-	Error chan error
-	Line  chan *Line
+	Line chan *Line
 }
 
 type Line struct {
@@ -42,11 +41,12 @@ type Line struct {
 }
 
 type function struct {
-	file    File
-	envs    []Param
-	args    []string
-	livelog int64
-	name    func(string, File, []Param, []string, int64, Livelog) error
+	file  File
+	envs  []Param
+	args  []string
+	count int64
+	width int64
+	name  func(string, File, []Param, []string, int64, int64, Livelog) error
 }
 
 type result struct {
@@ -59,18 +59,19 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, File, []Param, []string, int64, Livelog) error,
-	file File, envs []Param, args []string, log int64) {
+func (r *Runner) AddVertex(name string, fn func(string, File, []Param, []string, int64, int64, Livelog) error,
+	file File, envs []Param, args []string, count, width int64) {
 	if r.fn == nil {
 		r.fn = make(map[string]*function)
 	}
 
 	r.fn[name] = &function{
-		file:    file,
-		envs:    envs,
-		args:    args,
-		livelog: log,
-		name:    fn,
+		file:  file,
+		envs:  envs,
+		args:  args,
+		count: count,
+		width: width,
+		name:  fn,
 	}
 }
 
@@ -202,7 +203,7 @@ func (r *Runner) start(name string, fn *function, log Livelog, resc chan<- resul
 		defer wg.Done()
 		resc <- result{
 			name: name,
-			err:  fn.name(name, fn.file, fn.envs, fn.args, fn.livelog, log),
+			err:  fn.name(name, fn.file, fn.envs, fn.args, fn.count, fn.width, log),
 		}
 	}(name, fn, log, resc, wg)
 }
