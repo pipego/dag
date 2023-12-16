@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	lineCount = 5000
-	lineWidth = 500
+	Count = 5000
+	Width = 500
 )
 
 type Task struct {
@@ -54,7 +54,7 @@ var (
 				},
 			},
 			Commands: []string{"echo", "$env1"},
-			Width:    lineWidth,
+			Width:    Width,
 			Depends:  []string{},
 		},
 		{
@@ -67,7 +67,7 @@ var (
 				},
 			},
 			Commands: []string{"echo", "$env2"},
-			Width:    lineWidth,
+			Width:    Width,
 			Depends:  []string{},
 		},
 		{
@@ -80,7 +80,7 @@ var (
 				},
 			},
 			Commands: []string{"echo", "$env3"},
-			Width:    lineWidth,
+			Width:    Width,
 			Depends:  []string{"task1", "task2"},
 		},
 	}
@@ -90,7 +90,7 @@ func main() {
 	var r runner.Runner
 
 	l := runner.Log{
-		Line: make(chan *runner.Line, lineCount),
+		Line: make(chan *runner.Line, Count),
 	}
 
 	d := initDag()
