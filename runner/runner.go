@@ -30,7 +30,7 @@ type Param struct {
 	Value string
 }
 
-type Livelog struct {
+type Log struct {
 	Line chan *Line
 }
 
@@ -45,7 +45,7 @@ type function struct {
 	envs  []Param
 	args  []string
 	width int64
-	name  func(string, File, []Param, []string, int64, Livelog) error
+	name  func(string, File, []Param, []string, int64, Log) error
 }
 
 type result struct {
@@ -58,7 +58,7 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, File, []Param, []string, int64, Livelog) error,
+func (r *Runner) AddVertex(name string, fn func(string, File, []Param, []string, int64, Log) error,
 	file File, envs []Param, args []string, width int64) {
 	if r.fn == nil {
 		r.fn = make(map[string]*function)
@@ -87,7 +87,7 @@ func (r *Runner) AddEdge(from, to string) {
 // no dependency cycles. After validation, each vertex will be run, deterministically, in parallel
 // topological order. If any vertex returns an error, no more vertices will be scheduled and
 // Run will exit and return that error once all in-flight functions finish execution.
-func (r *Runner) Run(log Livelog) error {
+func (r *Runner) Run(log Log) error {
 	var err error
 	var running int
 
@@ -196,8 +196,8 @@ func (r *Runner) detectCyclesHelper(vertex string, visited, recStack map[string]
 	return false
 }
 
-func (r *Runner) start(name string, fn *function, log Livelog, resc chan<- result, wg *sync.WaitGroup) {
-	go func(name string, fn *function, log Livelog, resc chan<- result, wg *sync.WaitGroup) {
+func (r *Runner) start(name string, fn *function, log Log, resc chan<- result, wg *sync.WaitGroup) {
+	go func(name string, fn *function, log Log, resc chan<- result, wg *sync.WaitGroup) {
 		defer wg.Done()
 		resc <- result{
 			name: name,

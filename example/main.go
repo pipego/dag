@@ -89,7 +89,7 @@ var (
 func main() {
 	var r runner.Runner
 
-	l := runner.Livelog{
+	l := runner.Log{
 		Line: make(chan *runner.Line, lineCount),
 	}
 
@@ -137,7 +137,7 @@ func initDag() Dag {
 	return dag
 }
 
-func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
+func runDag(run runner.Runner, dag Dag, log runner.Log) error {
 	for _, vertex := range dag.Vertex {
 		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Params, vertex.Commands, vertex.Width)
 	}
@@ -149,7 +149,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	return run.Run(log)
 }
 
-func runHelper(_ string, _ runner.File, params []runner.Param, cmds []string, _ int64, log runner.Livelog) error {
+func runHelper(_ string, _ runner.File, params []runner.Param, cmds []string, _ int64, log runner.Log) error {
 	var a, args []string
 	var n string
 
@@ -188,10 +188,10 @@ func buildEnvs(params []runner.Param) []string {
 	return buf
 }
 
-func routine(scanner *bufio.Scanner, log runner.Livelog) {
+func routine(scanner *bufio.Scanner, log runner.Log) {
 	done := make(chan bool)
 
-	go func(scanner *bufio.Scanner, log runner.Livelog, done chan bool) {
+	go func(scanner *bufio.Scanner, log runner.Log, done chan bool) {
 		p := 1
 		for scanner.Scan() {
 			l := runner.Line{Pos: int64(p), Time: time.Now().Unix(), Message: scanner.Text()}
@@ -204,7 +204,7 @@ func routine(scanner *bufio.Scanner, log runner.Livelog) {
 	<-done
 }
 
-func printer(log runner.Livelog, done chan<- bool) {
+func printer(log runner.Log, done chan<- bool) {
 	for range tasks {
 		line := <-log.Line
 		fmt.Println(line)
