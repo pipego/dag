@@ -20,7 +20,6 @@ type Task struct {
 	File     runner.File
 	Params   []runner.Param
 	Commands []string
-	Count    int64
 	Width    int64
 	Depends  []string
 }
@@ -35,7 +34,6 @@ type Vertex struct {
 	File     runner.File
 	Params   []runner.Param
 	Commands []string
-	Count    int64
 	Width    int64
 }
 
@@ -56,7 +54,6 @@ var (
 				},
 			},
 			Commands: []string{"echo", "$env1"},
-			Count:    lineCount,
 			Width:    lineWidth,
 			Depends:  []string{},
 		},
@@ -70,7 +67,6 @@ var (
 				},
 			},
 			Commands: []string{"echo", "$env2"},
-			Count:    lineCount,
 			Width:    lineWidth,
 			Depends:  []string{},
 		},
@@ -84,7 +80,6 @@ var (
 				},
 			},
 			Commands: []string{"echo", "$env3"},
-			Count:    lineCount,
 			Width:    lineWidth,
 			Depends:  []string{"task1", "task2"},
 		},
@@ -126,7 +121,6 @@ func initDag() Dag {
 			File:     tasks[index].File,
 			Params:   tasks[index].Params,
 			Commands: tasks[index].Commands,
-			Count:    tasks[index].Count,
 			Width:    tasks[index].Width,
 		}
 		dag.Vertex = append(dag.Vertex, d)
@@ -145,7 +139,7 @@ func initDag() Dag {
 
 func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	for _, vertex := range dag.Vertex {
-		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Params, vertex.Commands, vertex.Count, vertex.Width)
+		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Params, vertex.Commands, vertex.Width)
 	}
 
 	for _, edge := range dag.Edge {
@@ -155,7 +149,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Livelog) error {
 	return run.Run(log)
 }
 
-func runHelper(_ string, _ runner.File, params []runner.Param, cmds []string, _, _ int64, log runner.Livelog) error {
+func runHelper(_ string, _ runner.File, params []runner.Param, cmds []string, _ int64, log runner.Livelog) error {
 	var a, args []string
 	var n string
 
