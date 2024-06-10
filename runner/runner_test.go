@@ -38,10 +38,11 @@ func TestZero(t *testing.T) {
 
 func TestOne(t *testing.T) {
 	var r Runner
+	var lang Language
 
 	err := errors.New("error")
-	r.AddVertex("one", func(string, File, []Param, []string, int64, Log) error { return err },
-		File{}, []Param{}, []string{}, Width)
+	r.AddVertex("one", func(string, File, []Param, []string, int64, Language, Log) error { return err },
+		File{}, []Param{}, []string{}, Width, lang)
 
 	log := Log{
 		Line: make(chan *Line),
@@ -66,16 +67,17 @@ func TestOne(t *testing.T) {
 
 func TestManyNoDeps(t *testing.T) {
 	var r Runner
+	var lang Language
 
 	err := errors.New("error")
-	r.AddVertex("one", func(string, File, []Param, []string, int64, Log) error { return err },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("two", func(string, File, []Param, []string, int64, Log) error { return err },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("three", func(string, File, []Param, []string, int64, Log) error { return err },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("four", func(string, File, []Param, []string, int64, Log) error { return err },
-		File{}, []Param{}, []string{}, Width)
+	r.AddVertex("one", func(string, File, []Param, []string, int64, Language, Log) error { return err },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("two", func(string, File, []Param, []string, int64, Language, Log) error { return err },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("three", func(string, File, []Param, []string, int64, Language, Log) error { return err },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("four", func(string, File, []Param, []string, int64, Language, Log) error { return err },
+		File{}, []Param{}, []string{}, Width, lang)
 
 	log := Log{
 		Line: make(chan *Line),
@@ -100,15 +102,16 @@ func TestManyNoDeps(t *testing.T) {
 
 func TestManyWithCycle(t *testing.T) {
 	var r Runner
+	var lang Language
 
-	r.AddVertex("one", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("two", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("three", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("four", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
+	r.AddVertex("one", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("two", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("three", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("four", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
 
 	r.AddEdge("one", "two")
 	r.AddEdge("two", "three")
@@ -138,15 +141,16 @@ func TestManyWithCycle(t *testing.T) {
 
 func TestInvalidToVertex(t *testing.T) {
 	var r Runner
+	var lang Language
 
-	r.AddVertex("one", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("two", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("three", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("four", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
+	r.AddVertex("one", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("two", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("three", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("four", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
 
 	r.AddEdge("one", "two")
 	r.AddEdge("two", "three")
@@ -176,15 +180,16 @@ func TestInvalidToVertex(t *testing.T) {
 
 func TestInvalidFromVertex(t *testing.T) {
 	var r Runner
+	var lang Language
 
-	r.AddVertex("one", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("two", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("three", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
-	r.AddVertex("four", func(string, File, []Param, []string, int64, Log) error { return nil },
-		File{}, []Param{}, []string{}, Width)
+	r.AddVertex("one", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("two", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("three", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("four", func(string, File, []Param, []string, int64, Language, Log) error { return nil },
+		File{}, []Param{}, []string{}, Width, lang)
 
 	r.AddEdge("one", "two")
 	r.AddEdge("two", "three")
@@ -214,36 +219,37 @@ func TestInvalidFromVertex(t *testing.T) {
 
 func TestManyWithDepsSuccess(t *testing.T) {
 	var r Runner
+	var lang Language
 
 	res := make(chan string, 7)
-	r.AddVertex("one", func(string, File, []Param, []string, int64, Log) error {
+	r.AddVertex("one", func(string, File, []Param, []string, int64, Language, Log) error {
 		res <- "one"
 		return nil
-	}, File{}, []Param{}, []string{}, Width)
-	r.AddVertex("two", func(string, File, []Param, []string, int64, Log) error {
+	}, File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("two", func(string, File, []Param, []string, int64, Language, Log) error {
 		res <- "two"
 		return nil
-	}, File{}, []Param{}, []string{}, Width)
-	r.AddVertex("three", func(string, File, []Param, []string, int64, Log) error {
+	}, File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("three", func(string, File, []Param, []string, int64, Language, Log) error {
 		res <- "three"
 		return nil
-	}, File{}, []Param{}, []string{}, Width)
-	r.AddVertex("four", func(string, File, []Param, []string, int64, Log) error {
+	}, File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("four", func(string, File, []Param, []string, int64, Language, Log) error {
 		res <- "four"
 		return nil
-	}, File{}, []Param{}, []string{}, Width)
-	r.AddVertex("five", func(string, File, []Param, []string, int64, Log) error {
+	}, File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("five", func(string, File, []Param, []string, int64, Language, Log) error {
 		res <- "five"
 		return nil
-	}, File{}, []Param{}, []string{}, Width)
-	r.AddVertex("six", func(string, File, []Param, []string, int64, Log) error {
+	}, File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("six", func(string, File, []Param, []string, int64, Language, Log) error {
 		res <- "six"
 		return nil
-	}, File{}, []Param{}, []string{}, Width)
-	r.AddVertex("seven", func(string, File, []Param, []string, int64, Log) error {
+	}, File{}, []Param{}, []string{}, Width, lang)
+	r.AddVertex("seven", func(string, File, []Param, []string, int64, Language, Log) error {
 		res <- "seven"
 		return nil
-	}, File{}, []Param{}, []string{}, Width)
+	}, File{}, []Param{}, []string{}, Width, lang)
 
 	r.AddEdge("one", "two")
 	r.AddEdge("one", "three")

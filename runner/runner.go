@@ -30,6 +30,11 @@ type Param struct {
 	Value string
 }
 
+type Language struct {
+	Name  string
+	Image string
+}
+
 type Log struct {
 	Line chan *Line
 }
@@ -45,7 +50,8 @@ type function struct {
 	envs  []Param
 	args  []string
 	width int64
-	name  func(string, File, []Param, []string, int64, Log) error
+	lang  Language
+	name  func(string, File, []Param, []string, int64, Language, Log) error
 }
 
 type result struct {
@@ -58,8 +64,8 @@ var errCycleDetected = errors.New("dependency cycle detected")
 
 // AddVertex adds a function as a vertex in the graph. Only functions which have been added in this
 // way will be executed during Run.
-func (r *Runner) AddVertex(name string, fn func(string, File, []Param, []string, int64, Log) error,
-	file File, envs []Param, args []string, width int64) {
+func (r *Runner) AddVertex(name string, fn func(string, File, []Param, []string, int64, Language, Log) error,
+	file File, envs []Param, args []string, width int64, lang Language) {
 	if r.fn == nil {
 		r.fn = make(map[string]*function)
 	}
@@ -69,6 +75,7 @@ func (r *Runner) AddVertex(name string, fn func(string, File, []Param, []string,
 		envs:  envs,
 		args:  args,
 		width: width,
+		lang:  lang,
 		name:  fn,
 	}
 }
@@ -201,7 +208,7 @@ func (r *Runner) start(name string, fn *function, log Log, resc chan<- result, w
 		defer wg.Done()
 		resc <- result{
 			name: name,
-			err:  fn.name(name, fn.file, fn.envs, fn.args, fn.width, log),
+			err:  fn.name(name, fn.file, fn.envs, fn.args, fn.width, fn.lang, log),
 		}
 	}(name, fn, log, resc, wg)
 }

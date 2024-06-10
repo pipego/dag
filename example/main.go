@@ -21,6 +21,7 @@ type Task struct {
 	Params   []runner.Param
 	Commands []string
 	Width    int64
+	Language runner.Language
 	Depends  []string
 }
 
@@ -35,6 +36,7 @@ type Vertex struct {
 	Params   []runner.Param
 	Commands []string
 	Width    int64
+	Language runner.Language
 }
 
 type Edge struct {
@@ -55,6 +57,7 @@ var (
 			},
 			Commands: []string{"echo", "$env1"},
 			Width:    Width,
+			Language: runner.Language{},
 			Depends:  []string{},
 		},
 		{
@@ -68,6 +71,7 @@ var (
 			},
 			Commands: []string{"echo", "$env2"},
 			Width:    Width,
+			Language: runner.Language{},
 			Depends:  []string{},
 		},
 		{
@@ -81,6 +85,7 @@ var (
 			},
 			Commands: []string{"echo", "$env3"},
 			Width:    Width,
+			Language: runner.Language{},
 			Depends:  []string{"task1", "task2"},
 		},
 	}
@@ -122,6 +127,7 @@ func initDag() Dag {
 			Params:   tasks[index].Params,
 			Commands: tasks[index].Commands,
 			Width:    tasks[index].Width,
+			Language: tasks[index].Language,
 		}
 		dag.Vertex = append(dag.Vertex, d)
 
@@ -138,8 +144,9 @@ func initDag() Dag {
 }
 
 func runDag(run runner.Runner, dag Dag, log runner.Log) error {
-	for _, vertex := range dag.Vertex {
-		run.AddVertex(vertex.Name, runHelper, vertex.File, vertex.Params, vertex.Commands, vertex.Width)
+	for i := range dag.Vertex {
+		run.AddVertex(dag.Vertex[i].Name, runHelper, dag.Vertex[i].File, dag.Vertex[i].Params, dag.Vertex[i].Commands,
+			dag.Vertex[i].Width, dag.Vertex[i].Language)
 	}
 
 	for _, edge := range dag.Edge {
@@ -149,7 +156,7 @@ func runDag(run runner.Runner, dag Dag, log runner.Log) error {
 	return run.Run(log)
 }
 
-func runHelper(_ string, _ runner.File, params []runner.Param, cmds []string, _ int64, log runner.Log) error {
+func runHelper(_ string, _ runner.File, params []runner.Param, cmds []string, _ int64, _ runner.Language, log runner.Log) error {
 	var a, args []string
 	var n string
 
