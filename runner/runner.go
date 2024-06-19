@@ -31,8 +31,15 @@ type Param struct {
 }
 
 type Language struct {
-	Name  string
-	Image string
+	Name     string   `json:"name"`
+	Artifact Artifact `json:"artifact"`
+}
+
+type Artifact struct {
+	Image   string `json:"image"`
+	User    string `json:"user"`
+	Pass    string `json:"pass"`
+	Cleanup bool   `json:"cleanup"`
 }
 
 type Log struct {
